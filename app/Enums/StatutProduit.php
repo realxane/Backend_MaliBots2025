@@ -8,4 +8,4 @@ enum StatutProduit: string
     case Valide = 'valide';
     case Refuse = 'refuse';
     case Supprime = 'supprime';
-}
+} 
