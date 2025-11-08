@@ -3,8 +3,8 @@
 namespace App\Enums;
 
 enum StatutPaiement: string
-{
-    case Initie = 'initie';
-    case Reussi = 'reussi';
-    case Echoue = 'echoue';
+{   
+    case EN_ATTENTE = 'en_attente';
+    case SUCCES = 'succes';
+    case ECHEC = 'echec';
 }
