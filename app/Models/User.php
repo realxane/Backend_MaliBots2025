@@ -4,11 +4,12 @@ namespace App\Models; // Le modèle se trouve dans l’espace de noms App\Models
 
 use App\Enums\Role; // Import de l’énumération Role (pour gérer les rôles utilisateur)
 use Illuminate\Database\Eloquent\Model; // Classe de base d’un modèle Eloquent
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Concerns\HasUuids; // Trait pour générer des identifiants uniques (UUID)
 
 class User extends Model
 {
-    use HasUuids; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
+    use HasUuids, HasApiTokens; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
 
     protected $table = 'users'; // Nom de la table associée dans la base de données
     public $incrementing = false; // Les IDs ne sont pas auto-incrémentés (puisqu’on utilise des UUID)
