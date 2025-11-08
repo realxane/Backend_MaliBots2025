@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\Vendeur\ProduitController;
 // Acheteur
 use App\Http\Controllers\Api\Acheteur\PanierController;
 use App\Http\Controllers\Api\Acheteur\PanierItemController;
+//Favoris
+use App\Http\Controllers\Api\FavoriController;
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -28,4 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('panier/items/{item}', [PanierItemController::class, 'update'])->name('panier.items.update');
         Route::delete('panier/items/{item}', [PanierItemController::class, 'destroy'])->name('panier.items.destroy');
     });
+
+    //Favoris
+    Route::get('favoris', [FavoriController::class, 'index']);
+    Route::post('favoris', [FavoriController::class, 'store']);
+    Route::post('favoris/toggle', [FavoriController::class, 'toggle']);
+    Route::delete('favoris/{favori}', [FavoriController::class, 'destroy']);
 });

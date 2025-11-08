@@ -13,6 +13,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Produit::class => ProduitPolicy::class,
         Panier::class => PanierPolicy::class,
+        Favori::class  => FavoriPolicy::class,
     ];
 
     public function boot(): void

@@ -21,7 +21,7 @@ class User extends Model
     ];
 
     protected $hidden = ['motDePasse']; // Cache le mot de passe lors de la sérialisation en JSON
-
+ 
     // Transformations automatiques des champs
     protected $casts = [
         'role' => Role::class,
