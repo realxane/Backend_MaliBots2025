@@ -17,3 +17,13 @@ Route::get('/paiements/{id}', [PaiementController::class, 'show']);
 Route::post('/paiements', [PaiementController::class, 'store']);
 Route::put('/paiements/{id}', [PaiementController::class, 'update']);
 Route::delete('/paiements/{id}', [PaiementController::class, 'destroy']);
+
+use App\Http\Controllers\CommandeController;
+
+Route::prefix('commandes')->group(function () {
+    Route::get('/', [CommandeController::class, 'index']);
+    Route::get('/{id}', [CommandeController::class, 'show']);
+    Route::post('/', [CommandeController::class, 'store']);
+    Route::patch('/{id}/statut', [CommandeController::class, 'updateStatut']);
+    Route::delete('/{id}', [CommandeController::class, 'destroy']);
+});
