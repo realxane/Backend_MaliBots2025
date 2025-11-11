@@ -27,3 +27,22 @@ Route::prefix('commandes')->group(function () {
     Route::patch('/{id}/statut', [CommandeController::class, 'updateStatut']);
     Route::delete('/{id}', [CommandeController::class, 'destroy']);
 });
+
+use App\Http\Controllers\ProverbeController;
+use App\Http\Controllers\ConteController;
+
+//Route::middleware(['auth:sanctum'])->group(function () {
+    // Proverbes
+    Route::get('/proverbes', [ProverbeController::class, 'index']);
+    Route::get('/proverbes/{id}', [ProverbeController::class, 'show']);
+    Route::post('/proverbes', [ProverbeController::class, 'store']);
+    Route::put('/proverbes/{id}', [ProverbeController::class, 'update']);
+    Route::delete('/proverbes/{id}', [ProverbeController::class, 'destroy']);
+
+    // Contes
+    Route::get('/contes', [ConteController::class, 'index']);
+    Route::get('/contes/{id}', [ConteController::class, 'show']);
+    Route::post('/contes', [ConteController::class, 'store']);
+    Route::put('/contes/{id}', [ConteController::class, 'update']);
+    Route::delete('/contes/{id}', [ConteController::class, 'destroy']);
+
