@@ -27,7 +27,7 @@ class Produit extends Model
         'statut' => StatutProduit::class,
     ];
 
-
+ 
     //Un produit a une région
     public function regions()
     {
