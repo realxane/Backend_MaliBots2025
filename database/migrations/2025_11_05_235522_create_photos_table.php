@@ -9,15 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('photos', function (Blueprint $table) {
-            // PK UUID
             $table->uuid('id')->primary();
-
-            // Champs métier
             $table->string('titre');
-            $table->string('url', 2048);
             $table->text('description')->nullable();
 
-            // Relations (UNE SEULE déclaration, via foreignUuid)
             $table->foreignUuid('regionId')
                   ->constrained('regions')
                   ->cascadeOnUpdate()
@@ -28,9 +23,7 @@ return new class extends Migration
                   ->cascadeOnUpdate()
                   ->restrictOnDelete();
 
-            // Timestamps
             $table->timestamps();
-
         });
     }
 

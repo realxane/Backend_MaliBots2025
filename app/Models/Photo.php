@@ -1,23 +1,32 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Photo extends ContenuCulturel
+class Photo extends Model
 {
-    use HasUuids;
+    use HasFactory;
 
-    protected $table = 'photos';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'titre', 'regionId', 'publieParAdminId',
-        'url', 'description',
+        'id','titre','description','regionId','publieParAdminId'
     ];
 
-    //Une photo a une région
-    public function regions()
+    public function images()
+    {
+        return $this->hasMany(PhotoImage::class, 'photoId');
+    }
+
+    public function region()
     {
         return $this->belongsTo(Region::class, 'regionId');
-    } 
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'publieParAdminId');
+    }
 }
