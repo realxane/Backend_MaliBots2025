@@ -14,7 +14,7 @@ class Region extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['nom'];
+    protected $fillable = ['id','nom'];
 
     public function users()    { return $this->hasMany(User::class, 'regionId'); }
     public function produits() { return $this->hasMany(Produit::class, 'regionId'); }

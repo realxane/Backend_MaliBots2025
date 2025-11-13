@@ -1,100 +1,56 @@
 <?php
 
-namespace App\Models; // Le modèle se trouve dans l’espace de noms App\Models
+namespace App\Http\Controllers\Api;
 
-use App\Enums\Role; // Import de l’énumération Role (pour gérer les rôles utilisateur)
-use Illuminate\Database\Eloquent\Model; // Classe de base d’un modèle Eloquent
-use Illuminate\Database\Eloquent\Concerns\HasUuids; // Trait pour générer des identifiants uniques (UUID)
+use App\Http\Controllers\Controller;
+use App\Enums\Role;
+use App\Models\User;
+use App\Models\Region;
+use Illuminate\Http\Request;
 
-class User extends Model
+class UserController extends Controller
 {
-    use HasUuids; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
-
-    protected $table = 'users'; // Nom de la table associée dans la base de données
-    public $incrementing = false; // Les IDs ne sont pas auto-incrémentés (puisqu’on utilise des UUID)
-    protected $keyType = 'string'; // Type de la clé primaire (UUID = chaîne de caractères)
-
-    // Champs autorisés pour la création/mise à jour en masse
-    protected $fillable = [
-        'nom', 'email', 'motDePasse', 'role', 'telephone', 'regionId', 'isActive',
-    ];
-
-    protected $hidden = ['motDePasse']; // Cache le mot de passe lors de la sérialisation en JSON
-
-    // Transformations automatiques des champs
-    protected $casts = [
-        'role' => Role::class,
-        'isActive' => 'boolean',
-        'motDePasse' => 'hashed',
-    ]; 
-
-    // Relations
-
-    //Un utilisateur a une région
-    public function regions()
+    public function store(Request $request)
     {
-        return $this->belongsTo(Region::class, 'regionId');
-    }
+        // On récupère le rôle envoyé et on le convertit en enum
+        $role = Role::from($request->input('role'));
 
-    // Un utilisateur (vendeur) peut avoir plusieurs produits
-    public function produits()
-    {
-        return $this->hasMany(Produit::class, 'vendeurId');
-    }
+        // Validation de base
+        $rules = [
+            'nom' => 'required|string|max:120',
+            'email' => 'required|email|unique:users,email',
+            'motDePasse' => 'required|string|min:6',
+            'region' => 'required|string|max:150',
+        ];
 
-    // Un utilisateur (acheteur) peut avoir plusieurs commandes
-    public function commandes()
-    {
-        return $this->hasMany(Commande::class, 'acheteurId');
-    }
+        // Validation dynamique pour vendeur ou admin
+        if ($role === Role::Vendeur || $role === Role::Admin) {
+            $rules['telephone_pro'] = 'nullable|string|max:30';
+            $rules['descrit_ton_savoir_faire'] = 'nullable|string|max:255';
+        }
 
-    // Un utilisateur (acheteur) possède un seul panier
-    public function panier()
-    {
-        return $this->hasOne(Panier::class, 'acheteurId');
-    }
+        // Validation
+        $validated = $request->validate($rules);
 
-    // Un utilisateur peut avoir plusieurs favoris
-    public function favoris()
-    {
-        return $this->hasMany(Favori::class, 'utilisateurId');
-    }
+        // Gestion de la région (création si elle n'existe pas)
+        $region = Region::firstOrCreate(['nom' => $validated['region']]);
 
-    // Un utilisateur peut signaler plusieurs éléments
-    public function signalements()
-    {
-        return $this->hasMany(Signalement::class, 'utilisateurId');
-    }
+        // Création de l'utilisateur
+        $user = User::create([
+            'nom' => $validated['nom'],
+            'email' => $validated['email'],
+            'motDePasse' => $validated['motDePasse'], // sera hashé automatiquement grâce à $casts
+            'role' => $role,
+            'regionId' => $region->id,
+            'telephone' => $request->input('telephone'), // si tu veux récupérer le téléphone perso
+            'telephone_pro' => $request->input('telephone_pro'),
+            'descrit_ton_savoir_faire' => $request->input('descrit_ton_savoir_faire'),
+            'isActive' => true,
+        ]);
 
-    // Un administrateur peut valider plusieurs produits
-    public function validationsProduits()
-    {
-        return $this->hasMany(ValidationProduit::class, 'adminId');
-    }
-
-    // Un administrateur peut publier plusieurs musiques
-    public function musiques()
-    {
-        return $this->hasMany(Musique::class, 'publieParAdminId');
-    }
-
-    // Contenus culturels publiés (admin)
-
-    // Un administrateur peut publier plusieurs contes
-    public function contesPublies()
-    {
-        return $this->hasMany(Conte::class, 'publieParAdminId');
-    }
-
-    // Un administrateur peut publier plusieurs proverbes
-    public function proverbesPublies()
-    {
-        return $this->hasMany(Proverbe::class, 'publieParAdminId');
-    }
-
-    // Un administrateur peut publier plusieurs photos dans la Galerie
-    public function photosPubliees()
-    {
-        return $this->hasMany(Photo::class, 'publieParAdminId');
+        return response()->json([
+            'message' => 'Utilisateur créé avec succès',
+            'user' => $user
+        ], 201);
     }
 }
