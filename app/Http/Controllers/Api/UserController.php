@@ -10,41 +10,118 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function store(Request $request)
-{
-    $role = Role::from($request->input('role')); // convertit la string en enum
+     // 1. Lister tous les utilisateurs
+    public function index()
+    {
+        $users = User::with('region')->get(); // inclut la région
+        return response()->json($users);
+    }
+    //  2. Afficher un utilisateur par UUID
+    public function show($id)
+    {
+        $user = User::with('region')->find($id);
 
-    // Validation de base
-    $rules = [
-        'nom' => 'required|string|max:120',
-        'email' => 'required|email|unique:users,email',
-        'motDePasse' => 'required|string|min:6',
-        'region' => 'required|string|max:150',
-    ];
+        if (!$user) {
+            return response()->json(['message' => 'Utilisateur introuvable'], 404);
+        }
 
-    // Validation dynamique selon le rôle
-    if ($role === Role::Vendeur || $role === Role::Admin) {
-        $rules['telephone_pro'] = 'nullable|string|max:30';
-        $rules['descrit_ton_savoir_faire'] = 'nullable|string|max:255';
+        return response()->json($user);
     }
 
-    $validated = $request->validate($rules);
+    
+   public function store(Request $request)
+{
+    try {
+        // Récupération du rôle et conversion en enum
+        $role = Role::from($request->input('role'));
 
-    // Gestion de la région
-    $region = Region::firstOrCreate(['nom' => $validated['region']]);
+        // Validation
+        $rules = [
+            'nom' => 'required|string|max:120',
+            'email' => 'required|email|unique:users,email',
+            'motDePasse' => 'required|string|min:6',
+            'region' => 'required|string|max:150',
+        ];
 
-    // Création de l'utilisateur
-    $user = User::create([
-        'nom' => $validated['nom'],
-        'email' => $validated['email'],
-        'motDePasse' => $validated['motDePasse'],
-        'role' => $role,
-        'regionId' => $region->id,
-        'telephone_pro' => $request->input('telephone_pro'),
-        'descrit_ton_savoir_faire' => $request->input('descrit_ton_savoir_faire'),
-    ]);
+        if ($role === Role::Vendeur || $role === Role::Admin) {
+            $rules['telephone_pro'] = 'nullable|string|max:30';
+            $rules['descrit_ton_savoir_faire'] = 'nullable|string|max:255';
+        }
 
-    return response()->json(['message' => 'Utilisateur créé', 'user' => $user], 201);
+        $validated = $request->validate($rules);
+
+        // Création ou récupération de la région
+        $region = Region::firstOrCreate(['nom' => $validated['region']]);
+
+        // Création de l'utilisateur
+        $user = User::create([
+            'nom' => $validated['nom'],
+            'email' => $validated['email'],
+            'motDePasse' => $validated['motDePasse'], // hash automatique grâce à $casts
+            'role' => $role,
+            'regionId' => $region->id,
+            'telephone' => $request->input('telephone'),
+            'telephone_pro' => $request->input('telephone_pro'),
+            'descrit_ton_savoir_faire' => $request->input('descrit_ton_savoir_faire'),
+            'isActive' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'Utilisateur créé avec succès !',
+            'user' => $user
+        ], 201);
+
+    } catch (\Throwable $e) {
+        // Retourne une erreur claire si quelque chose échoue
+        return response()->json([
+            'message' => 'Erreur lors de la création de l’utilisateur',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }
+ // 4. Mettre à jour un utilisateur
+    public function update(Request $request, $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Utilisateur introuvable'], 404);
+        }
+
+        $rules = [
+            'nom' => 'sometimes|string|max:120',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
+            'motDePasse' => 'sometimes|string|min:6',
+            'region' => 'sometimes|string|max:150',
+            'telephone' => 'sometimes|string|max:30',
+            'telephone_pro' => 'sometimes|string|max:30',
+            'descrit_ton_savoir_faire' => 'sometimes|string|max:255',
+        ];
+
+        $validated = $request->validate($rules);
+
+        if (isset($validated['region'])) {
+            $region = Region::firstOrCreate(['nom' => $validated['region']]);
+            $validated['regionId'] = $region->id;
+        }
+
+        if (isset($validated['motDePasse'])) {
+            $validated['motDePasse'] = $validated['motDePasse']; // hash automatique via $casts
+        }
+
+        $user->update($validated);
+
+        return response()->json(['message' => 'Utilisateur mis à jour', 'user' => $user]);
+    }
+     public function destroy($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Utilisateur introuvable'], 404);
+        }
+
+        $user->delete();
+        return response()->json(['message' => 'Utilisateur supprimé avec succès']);
+    }
+
   
 }

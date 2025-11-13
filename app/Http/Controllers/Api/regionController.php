@@ -16,7 +16,7 @@ class RegionController extends Controller
         return response()->json($regions);
     }
 
-    // 🟡 2. Créer une nouvelle région
+    //  2. Créer une nouvelle région
     public function store(Request $request)
     {
         // Validation
@@ -36,7 +36,7 @@ class RegionController extends Controller
         ], 201);
     }
 
-    // 🔵 3. Afficher une région par ID
+    //  3. Afficher une région par ID
     public function show($id)
     {
         $region = Region::find($id);
