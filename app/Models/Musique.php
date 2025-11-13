@@ -17,7 +17,11 @@ class Musique extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'titre', 'fichierUrl', 'couvertureUrl', 'duree', 'dateSortie',
+        'titre',
+        'artist',
+        'genre',
+        'urlImage',
+        'urlAudio',
     ];
 
     protected $casts = [
