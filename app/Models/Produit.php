@@ -18,13 +18,14 @@ class Produit extends Model
  
     protected $fillable = [
         'nom', 'description', 'prix', 'categorie', 'regionId', 'imageUrl',
-        'statut', 'vendeurId', 
+        'statut', 'vendeurId', 'stock',
     ];
 
     protected $casts = [
         'prix' => 'decimal:2',
         'categorie' => CategorieProduit::class,
         'statut' => StatutProduit::class,
+        'stock'     => 'integer',
     ];
 
  
@@ -62,5 +63,10 @@ class Produit extends Model
     public function commandeItems()
     {
         return $this->hasMany(CommandeItem::class, 'produitId');
+    }
+
+    public function commentaires()
+    {
+        return $this->hasMany(Commentaire::class, 'produitId');
     }
 } 

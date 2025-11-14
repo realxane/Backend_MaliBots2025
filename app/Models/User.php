@@ -6,10 +6,11 @@ use App\Enums\Role; // Import de l’énumération Role (pour gérer les rôles 
 use Illuminate\Database\Eloquent\Model; // Classe de base d’un modèle Eloquent
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Concerns\HasUuids; // Trait pour générer des identifiants uniques (UUID)
+use Illuminate\Notifications\Notifiable; //Pour les notifications, pas besoin de créer une table, Laravel fournit déjà un système pour gérer les notifications
 
 class User extends Model
 {
-    use HasUuids, HasApiTokens; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
+    use HasUuids, HasApiTokens, Notifiable; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
 
     protected $table = 'users'; // Nom de la table associée dans la base de données
     public $incrementing = false; // Les IDs ne sont pas auto-incrémentés (puisqu’on utilise des UUID)
@@ -48,7 +49,7 @@ class User extends Model
     {
         return $this->hasMany(Commande::class, 'acheteurId');
     }
-
+ 
     // Un utilisateur (acheteur) possède un seul panier
     public function panier()
     {
@@ -97,5 +98,9 @@ class User extends Model
     public function photosPubliees()
     {
         return $this->hasMany(Photo::class, 'publieParAdminId');
+    }
+    public function commentairesPublies()
+    {
+        return $this->hasMany(Commentaire::class, 'acheteurId');
     }
 }

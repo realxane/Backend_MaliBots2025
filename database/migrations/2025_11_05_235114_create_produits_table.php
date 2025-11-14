@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nom');
             $table->text('description')->nullable();
             $table->decimal('prix', 12, 2);
+            $table->unsignedInteger('stock')->default(0); // idéalement après 'prix'
 
             // Enums: on stocke les valeurs des enums PHP (backed enums)
             $table->string('categorie', 50);
@@ -44,7 +45,7 @@ return new class extends Migration
             $table->index('regionId');
             $table->index('vendeurId');
         });
-    }
+    } 
 
     public function down(): void
     {

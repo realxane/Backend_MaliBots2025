@@ -2,6 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 
+
+// paiements
+use App\Http\Controllers\PaiementController;
+
+use App\Http\Controllers\ProverbeController;
+use App\Http\Controllers\ConteController;
+
 // Vendeur
 use App\Http\Controllers\Api\Vendeur\ProduitController;
 
@@ -13,6 +20,46 @@ use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\Musique\MusiqueController;
 use App\Http\Controllers\Api\galerie\PhotoController;
 
+// commandes
+use App\Http\Controllers\CommandeController;
+
+//Commentaires
+use App\Http\Controllers\Api\Commentaire\CommentaireController;
+
+Route::get('/paiements', [PaiementController::class, 'index']);
+Route::get('/paiements/{id}', [PaiementController::class, 'show']);
+Route::post('/paiements', [PaiementController::class, 'store']);
+Route::put('/paiements/{id}', [PaiementController::class, 'update']);
+Route::delete('/paiements/{id}', [PaiementController::class, 'destroy']);
+
+Route::prefix('commandes')->group(function () {
+    Route::get('/', [CommandeController::class, 'index']);
+    Route::get('/{id}', [CommandeController::class, 'show']);
+    Route::post('/', [CommandeController::class, 'store']);
+    Route::patch('/{id}/statut', [CommandeController::class, 'updateStatut']);
+    Route::delete('/{id}', [CommandeController::class, 'destroy']);
+});
+
+//Route::middleware(['auth:sanctum'])->group(function () {
+    // Proverbes
+    Route::get('/proverbes', [ProverbeController::class, 'index']);
+    Route::get('/proverbes/{id}', [ProverbeController::class, 'show']);
+    Route::post('/proverbes', [ProverbeController::class, 'store']);
+    Route::put('/proverbes/{id}', [ProverbeController::class, 'update']);
+    Route::delete('/proverbes/{id}', [ProverbeController::class, 'destroy']);
+
+    // Contes
+    Route::get('/contes', [ConteController::class, 'index']);
+    Route::get('/contes/{id}', [ConteController::class, 'show']);
+    Route::post('/contes', [ConteController::class, 'store']);
+    Route::put('/contes/{id}', [ConteController::class, 'update']);
+    Route::delete('/contes/{id}', [ConteController::class, 'destroy']);
+//});
+// Lecture publique
+Route::apiResource('produits.commentaires', CommentaireController::class)
+    ->shallow()
+    ->only(['index', 'show']);
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // Vendeur
@@ -22,6 +69,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('produits/{id}/restore', [ProduitController::class, 'restore'])
             ->name('produits.restore');
     });
+
+    //Commentaires 
+
+    // Écriture protégée
+    Route::apiResource('produits.commentaires', CommentaireController::class)
+        ->only(['store', 'update', 'destroy']);
 
     // Acheteur
     Route::prefix('acheteur')->as('acheteur.')->middleware('checkrole:acheteur')->group(function () {

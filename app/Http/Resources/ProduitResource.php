@@ -18,6 +18,7 @@ class ProduitResource extends JsonResource
             'imageUrl'    => $this->imageUrl,
             'regionId'    => $this->regionId,
             'vendeurId'   => $this->vendeurId,
+            'stock'       => (int) $this->stock,
             'createdAt'   => $this->created_at,
             'updatedAt'   => $this->updated_at,
         ];

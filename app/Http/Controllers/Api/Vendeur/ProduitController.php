@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Api\Vendeur;
 
+use App\Models\User;
+use App\Enums\Role;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NouveauProduitPublie;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Http\Requests\StoreProduitRequest;
@@ -42,7 +46,7 @@ class ProduitController extends Controller
 
         // Définir un statut par défaut si non fourni (ajustez selon vos enums)
         if (! isset($data['statut']) && enum_exists(StatutProduit::class)) {
-            $data['statut'] = StatutProduit::Brouillon->value ?? 'brouillon';
+            $data['statut'] = StatutProduit::EnAttente;
         }
 
         $produit = Produit::create($data);
@@ -69,7 +73,17 @@ class ProduitController extends Controller
         // Sécurité: empêcher tout override malicieux
         unset($data['vendeurId'], $data['id']);
 
+        $ancienStatut = $produit->statut instanceof StatutProduit
+            ? $produit->statut
+            : (is_string($produit->statut) ? StatutProduit::from($produit->statut) : null);
+
         $produit->update($data);
+        $produit->refresh();
+
+        // Si le statut vient de passer à "Valide"
+        if ($ancienStatut !== StatutProduit::Valide && $produit->statut === StatutProduit::Valide) {
+            $this->sendNouveauProduitPublie($produit);
+        }
 
         return new ProduitResource($produit);
     }
@@ -99,5 +113,20 @@ class ProduitController extends Controller
         $produit->restore();
 
         return new ProduitResource($produit);
+    }
+
+    private function sendNouveauProduitPublie(Produit $produit): void
+    {
+        User::where('role', Role::Acheteur)
+            ->where('isActive', true)
+            ->select('id') // suffisant pour le canal database
+            ->chunk(500, function ($acheteurs) use ($produit) {
+                Notification::send($acheteurs, new NouveauProduitPublie(
+                    produitId: $produit->id,
+                    titre: $produit->nom,
+                    imageUrl: $produit->imageUrl,
+                    vendeurId: $produit->vendeurId
+                ));
+            });
     }
 }

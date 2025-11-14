@@ -11,7 +11,7 @@ class Proverbe extends ContenuCulturel
     protected $table = 'proverbes';
 
     protected $fillable = [
-        'regionid', 'publieParAdminId',
+        'regionId', 'publieParAdminId',
         'texte', 'langue',
     ];
 

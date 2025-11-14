@@ -24,6 +24,7 @@ class UpdateProduitRequest extends FormRequest
             'statut'      => ['sometimes', Rule::enum(StatutProduit::class)],
             'regionId'    => ['sometimes', 'uuid', 'exists:regions,id'],
             'imageUrl'    => ['sometimes', 'url', 'max:2048'],
+            'stock'       => ['sometimes','integer','min:0'],
         ];
     }
 }

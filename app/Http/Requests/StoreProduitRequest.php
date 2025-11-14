@@ -25,6 +25,7 @@ class StoreProduitRequest extends FormRequest
             'statut'      => ['sometimes', Rule::enum(StatutProduit::class)], // optionnel: on peut forcer un statut par défaut
             'regionId'    => ['required', 'uuid', 'exists:regions,id'],
             'imageUrl'    => ['required', 'url', 'max:2048'],
+            'stock'       => ['required','integer','min:0'],
             // vendeurId ne doit PAS venir du client (voir sécurité ci-dessous)
         ];
     }
