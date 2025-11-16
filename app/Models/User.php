@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Laravel\Sanctum\HasApiTokens; // Pour l'authentification
 use Illuminate\Foundation\Auth\User as Authenticatable; // Pour l'authentification
 use Illuminate\Notifications\Notifiable;
 use App\Enums\Role;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUuids;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids;
 
     /**
      * Laravel n'utilise pas d'auto-incrément ici, car l'ID est un UUID

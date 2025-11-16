@@ -12,9 +12,17 @@ class UserController extends Controller
 {
      // 1. Lister tous les utilisateurs
     public function index()
-    {
+
+    { try{
         $users = User::with('region')->get(); // inclut la région
         return response()->json($users);
+        }catch (\Throwable $e) {
+        // Retourne une erreur claire si quelque chose échoue
+        return response()->json([
+            'message' => 'Erreur de chargement de l’utilisateur',
+            'error' => $e->getMessage()
+        ], 500);
+    }
     }
     //  2. Afficher un utilisateur par UUID
     public function show($id)
@@ -29,11 +37,18 @@ class UserController extends Controller
     }
 
     
+
    public function store(Request $request)
 {
     try {
         // Récupération du rôle et conversion en enum
-        $role = Role::from($request->input('role'));
+        $roleInput = ucfirst(strtolower($request->input('role')));
+        $role = Role::tryFrom($roleInput);
+        if (!$role) {
+            return response()->json([
+                'message' => 'Rôle invalide'
+            ], 400);
+        }
 
         // Validation
         $rules = [
@@ -79,6 +94,44 @@ class UserController extends Controller
         ], 500);
     }
 }
+public function storeavecrole(Request $request, $role)
+{
+    try {
+        
+    $role = ucfirst(strtolower($role)); // transforme "vendeur" → "Vendeur"
+
+    $validated = $request->validate([
+        'nom' => 'required|string|max:120',
+        'email' => 'required|email|unique:users,email',
+        'motDePasse' => 'required|string|min:6',
+        'region' => 'required|string|max:150',
+        'telephone' => 'nullable|string|max:30',
+    ]);
+
+    $region = Region::firstOrCreate(['nom' => $validated['region']]);
+
+    $user = User::create([
+        'nom' => $validated['nom'],
+        'email' => $validated['email'],
+        'motDePasse' => $validated['motDePasse'],
+        'role' => $role, 
+        'regionId' => $region->id,
+        'telephone' => $validated['telephone'] ?? null,
+        'telephone_pro' => $request->telephone_pro,
+        'descrit_ton_savoir_faire' => $request->descrit_ton_savoir_faire,
+    ]);
+
+    return response()->json(['user' => $user], 201);
+        }
+        catch (\Throwable $e) {
+        // Retourne une erreur claire si quelque chose échoue
+        return response()->json([
+            'message' => 'Erreur lors de la création de l’utilisateur',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
  // 4. Mettre à jour un utilisateur
     public function update(Request $request, $id)
     {
