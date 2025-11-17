@@ -84,3 +84,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('favoris/{favori}', [FavoriController::class, 'destroy']);
 });
 
+   //Signalement
+   use App\Http\Controllers\SignalementController;
+
+    Route::get('/signalements', [SignalementController::class, 'index']);
+    Route::get('/signalements/{id}', [SignalementController::class, 'show']);
+    Route::post('/signalements', [SignalementController::class, 'store']);
+    Route::put('/signalements/{id}', [SignalementController::class, 'mettreAJourStatut']);
+    Route::delete('/signalements/{id}', [SignalementController::class, 'destroy']);
+
