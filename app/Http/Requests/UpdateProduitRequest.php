@@ -11,7 +11,16 @@ class UpdateProduitRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // la Policy 'update' sera appelée dans le controller
+        return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (!$this->has('images') && $this->filled('imageUrl')) {
+            $this->merge([
+                'images' => [$this->input('imageUrl')],
+            ]);
+        }
     }
 
     public function rules(): array
@@ -23,8 +32,13 @@ class UpdateProduitRequest extends FormRequest
             'categorie'   => ['sometimes', Rule::enum(CategorieProduit::class)],
             'statut'      => ['sometimes', Rule::enum(StatutProduit::class)],
             'regionId'    => ['sometimes', 'uuid', 'exists:regions,id'],
-            'imageUrl'    => ['sometimes', 'url', 'max:2048'],
             'stock'       => ['sometimes','integer','min:0'],
+
+            // Mise à jour des images: si présent, on remplace l’ensemble
+            'images'      => ['sometimes', 'array', 'min:1'],
+            'images.*'    => ['url', 'max:2048'],
+
+            'imageUrl'    => ['sometimes', 'url', 'max:2048'], // compat
         ];
     }
 }

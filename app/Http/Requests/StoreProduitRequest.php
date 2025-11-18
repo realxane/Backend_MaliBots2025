@@ -11,8 +11,17 @@ class StoreProduitRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Rôle déjà vérifié par le middleware; on peut aussi Gate::authorize('create', Produit::class).
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Compat: si imageUrl est fourni mais pas images, on crée images = [imageUrl]
+        if (!$this->has('images') && $this->filled('imageUrl')) {
+            $this->merge([
+                'images' => [$this->input('imageUrl')],
+            ]);
+        }
     }
 
     public function rules(): array
@@ -22,11 +31,16 @@ class StoreProduitRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'prix'        => ['required', 'numeric', 'min:0'],
             'categorie'   => ['required', Rule::enum(CategorieProduit::class)],
-            'statut'      => ['sometimes', Rule::enum(StatutProduit::class)], // optionnel: on peut forcer un statut par défaut
+            'statut'      => ['sometimes', Rule::enum(StatutProduit::class)],
             'regionId'    => ['required', 'uuid', 'exists:regions,id'],
-            'imageUrl'    => ['required', 'url', 'max:2048'],
             'stock'       => ['required','integer','min:0'],
-            // vendeurId ne doit PAS venir du client (voir sécurité ci-dessous)
+
+            // Nouvelles règles
+            'images'      => ['required', 'array', 'min:1'],
+            'images.*'    => ['url', 'max:2048'],
+
+            // Ancien champ (déprécié) encore accepté mais non utilisé directement
+            'imageUrl'    => ['sometimes', 'url', 'max:2048'],
         ];
     }
 }

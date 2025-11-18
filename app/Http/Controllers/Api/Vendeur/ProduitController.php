@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Vendeur;
 
 use App\Models\User;
 use App\Enums\Role;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NouveauProduitPublie;
 use App\Http\Controllers\Controller;
@@ -12,13 +13,15 @@ use App\Http\Requests\StoreProduitRequest;
 use App\Http\Requests\UpdateProduitRequest;
 use App\Http\Resources\ProduitResource;
 use App\Models\Produit;
+use App\Models\ProduitImage;
 use App\Enums\StatutProduit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class ProduitController extends Controller
-{   
-    use AuthorizesRequests; 
+{
+    use AuthorizesRequests;
+
     // GET /vendeur/produits
     public function index(Request $request)
     {
@@ -29,6 +32,7 @@ class ProduitController extends Controller
             ->when($request->filled('categorie'), fn($q) => $q->where('categorie', $request->input('categorie')))
             ->when($request->filled('statut'), fn($q) => $q->where('statut', $request->input('statut')))
             ->when($request->boolean('withTrashed'), fn($q) => $q->withTrashed())
+            ->with('images') // eager load des images
             ->orderByDesc('created_at');
 
         $perPage = min(max((int) $request->input('perPage', 15), 1), 100);
@@ -44,12 +48,38 @@ class ProduitController extends Controller
         $data = $request->validated();
         $data['vendeurId'] = $request->user()->id;
 
-        // Définir un statut par défaut si non fourni (ajustez selon vos enums)
         if (! isset($data['statut']) && enum_exists(StatutProduit::class)) {
             $data['statut'] = StatutProduit::EnAttente;
         }
 
-        $produit = Produit::create($data);
+        $images = $data['images'] ?? [];
+        unset($data['images']); // on gère séparément
+        // imageUrl déprécié
+        unset($data['imageUrl']);
+
+        $produit = DB::transaction(function () use ($data, $images) {
+            $produit = Produit::create($data);
+
+            // Création des images
+            foreach (array_values($images) as $idx => $url) {
+                ProduitImage::create([
+                    'produitId' => $produit->id,
+                    'url'       => $url,
+                    'position'  => $idx,
+                ]);
+            }
+
+            // Compat: renseigner imageUrl avec la première image si la colonne existe
+            if (schema()->hasColumn('produits', 'imageUrl')) {
+                $first = $images[0] ?? null;
+                if ($first) {
+                    $produit->imageUrl = $first;
+                    $produit->save();
+                }
+            }
+
+            return $produit->load('images');
+        });
 
         return (new ProduitResource($produit))
             ->response()
@@ -61,7 +91,7 @@ class ProduitController extends Controller
     {
         $this->authorize('view', $produit);
 
-        return new ProduitResource($produit);
+        return new ProduitResource($produit->load('images'));
     }
 
     // PUT/PATCH /vendeur/produits/{produit}
@@ -70,17 +100,41 @@ class ProduitController extends Controller
         $this->authorize('update', $produit);
 
         $data = $request->validated();
-        // Sécurité: empêcher tout override malicieux
         unset($data['vendeurId'], $data['id']);
 
         $ancienStatut = $produit->statut instanceof StatutProduit
             ? $produit->statut
             : (is_string($produit->statut) ? StatutProduit::from($produit->statut) : null);
 
-        $produit->update($data);
-        $produit->refresh();
+        $images = $data['images'] ?? null;
+        unset($data['images'], $data['imageUrl']); // on gère les images séparément
 
-        // Si le statut vient de passer à "Valide"
+        $produit = DB::transaction(function () use ($produit, $data, $images) {
+            if (!empty($data)) {
+                $produit->update($data);
+            }
+
+            // Si un tableau d’images est fourni, on remplace l’ensemble
+            if (is_array($images)) {
+                // delete puis recreate (simple et fiable)
+                $produit->images()->delete();
+                foreach (array_values($images) as $idx => $url) {
+                    $produit->images()->create([
+                        'url'      => $url,
+                        'position' => $idx,
+                    ]);
+                }
+
+                // Compat: maj imageUrl
+                if (schema()->hasColumn('produits', 'imageUrl')) {
+                    $produit->imageUrl = $images[0] ?? null;
+                    $produit->save();
+                }
+            }
+
+            return $produit->load('images');
+        });
+
         if ($ancienStatut !== StatutProduit::Valide && $produit->statut === StatutProduit::Valide) {
             $this->sendNouveauProduitPublie($produit);
         }
@@ -112,21 +166,31 @@ class ProduitController extends Controller
 
         $produit->restore();
 
-        return new ProduitResource($produit);
+        return new ProduitResource($produit->load('images'));
     }
 
     private function sendNouveauProduitPublie(Produit $produit): void
     {
+        // première image (thumbnail) si dispo
+        $thumb = $produit->first_image_url ?? $produit->firstImageUrl ?? null;
+
         User::where('role', Role::Acheteur)
             ->where('isActive', true)
-            ->select('id') // suffisant pour le canal database
-            ->chunk(500, function ($acheteurs) use ($produit) {
+            ->select('id')
+            ->chunk(500, function ($acheteurs) use ($produit, $thumb) {
                 Notification::send($acheteurs, new NouveauProduitPublie(
-                    produitId: $produit->id,
+                    produitId: (string) $produit->id,
                     titre: $produit->nom,
-                    imageUrl: $produit->imageUrl,
-                    vendeurId: $produit->vendeurId
+                    imageUrl: $thumb,
+                    vendeurId: (string) $produit->vendeurId
                 ));
             });
+    }
+}
+
+// Helper pour vérifier la présence de colonnes sans casser en prod
+if (!function_exists('schema')) {
+    function schema(): \Illuminate\Database\Schema\Builder {
+        return \Illuminate\Support\Facades\Schema::getFacadeRoot();
     }
 }
