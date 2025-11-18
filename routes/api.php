@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\Vendeur\ProduitController;
 use App\Http\Controllers\Api\Musique\MusiqueController;
 use App\Http\Controllers\Api\galerie\PhotoController;
+use App\Http\Controllers\Api\mdpO\ForgotPasswordController;
+use App\Http\Controllers\Api\mdpO\ResetPasswordController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -33,15 +35,16 @@ Route::prefix('musiques')->group(function () {
 Route::prefix('photos')->group(function () {
     Route::get('/', [PhotoController::class, 'index']);         // lister
     Route::get('/{id}', [PhotoController::class, 'show']);      // voir une publication
-
     // admin (on peux ajouter middleware auth plus tard)
     Route::post('/admin', [PhotoController::class, 'store']);   // publier (multipart form-data)
     Route::post('/admin/{id}', [PhotoController::class, 'update']); 
     Route::delete('/admin/{id}', [PhotoController::class, 'destroy']);
     Route::delete('/admin/image/{imageId}', [PhotoController::class, 'deleteImage']); // supprimer image
 });
-
 // endpoint regions
 Route::get('/regions', function() {
     return \App\Models\Region::all();
 });
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
