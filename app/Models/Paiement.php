@@ -29,5 +29,5 @@ class Paiement extends Model
     public function commande()
     {
         return $this->belongsTo(Commande::class, 'commandeId');
-    }
+    } 
 }

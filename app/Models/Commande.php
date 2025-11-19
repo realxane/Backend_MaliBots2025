@@ -24,7 +24,7 @@ class Commande extends Model
         'methodePaiement' => MethodePaiement::class,
         'statut' => StatutCommande::class,
     ];
-
+ 
     //Une commande concerne un acheteur
     public function acheteur()
     {

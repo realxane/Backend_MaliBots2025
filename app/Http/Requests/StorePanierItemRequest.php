@@ -26,4 +26,15 @@ class StorePanierItemRequest extends FormRequest
             'produitId.exists'   => 'Le produit est introuvable.',
         ];
     }
+    public function validationData(): array
+    {
+        // Log “brut” utile pour diagnostiquer ce que Laravel reçoit
+        logger()->debug('payload_brut', [
+            'headers' => $this->headers->all(),
+            'input'   => $this->all(),          // ce que Laravel voit (après parse)
+            'rawBody' => $this->getContent(),   // corps JSON brut (string)
+        ]);
+
+        return parent::validationData();
+    }
 }

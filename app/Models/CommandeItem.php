@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class CommandeItem extends Model
 {
-    use HasUuids;
+    use HasUuids; 
 
     protected $table = 'commande_items';
     public $incrementing = false;

@@ -92,6 +92,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('favoris/toggle', [FavoriController::class, 'toggle']);
     Route::delete('favoris/{favori}', [FavoriController::class, 'destroy']);
 
+    Route::post('/uploads', [UploadController::class, 'store']);       // 1 fichier
+    Route::post('/uploads/many', [UploadController::class, 'storeMany']); // optionnel
+
 });
 
 //admins
