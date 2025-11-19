@@ -31,6 +31,9 @@ use App\Http\Controllers\Api\Commentaire\CommentaireController;
 
 use App\Http\Controllers\Api\UploadController;
 
+//Signalement
+use App\Http\Controllers\SignalementController;
+
 Route::get('/paiements', [PaiementController::class, 'index']);
 Route::get('/paiements/{id}', [PaiementController::class, 'show']);
 Route::post('/paiements', [PaiementController::class, 'store']);
@@ -135,3 +138,10 @@ Route::get('/regions', function() {
 
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+   
+
+Route::get('/signalements', [SignalementController::class, 'index']);
+Route::get('/signalements/{id}', [SignalementController::class, 'show']);
+Route::post('/signalements', [SignalementController::class, 'store']);
+Route::put('/signalements/{id}', [SignalementController::class, 'mettreAJourStatut']);
+Route::delete('/signalements/{id}', [SignalementController::class, 'destroy']);
