@@ -18,10 +18,13 @@ return new class extends Migration
             $table->string('motDePasse', 255); // compatible avec le cast 'hashed'
             
             // Si votre enum App\Enums\Role est "string-backed"
-            $table->string('role', 50)->index();
+            $table->enum('role', ['Admin', 'Vendeur', 'Acheteur'])->default('Acheteur');
 
             // Téléphone optionnel mais unique si renseigné
             $table->string('telephone', 30)->nullable()->unique();
+             // Colonnes spécifiques pour vendeur/admin
+             $table->string('telephone_pro', 30)->nullable();
+            $table->string('descrit_ton_savoir_faire', 255)->nullable();
 
             // FK vers regions.id (supposé UUID). Non nul = un utilisateur a une région.
             $table->foreignUuid('regionId')

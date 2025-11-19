@@ -4,57 +4,64 @@ namespace App\Models;
 
 use App\Enums\Role;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
-use Laravel\Sanctum\HasApiTokens;
-<<<<<<< HEAD
+
 use Illuminate\Database\Eloquent\Concerns\HasUuids; // Trait pour générer des identifiants uniques (UUID)
 use Illuminate\Notifications\Notifiable; //Pour les notifications, pas besoin de créer une table, Laravel fournit déjà un système pour gérer les notifications
-=======
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Notifications\Notifiable;
->>>>>>> f8815316218828b93ef82217d1fc4a0c270a2d73
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens; // Pour l'authentification
+use Illuminate\Foundation\Auth\User as Authenticatable; // Pour l'authentification
+
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-<<<<<<< HEAD
-    use HasUuids, HasApiTokens, Notifiable; // Utilise le trait pour générer automatiquement un UUID pour chaque utilisateur
-=======
-    use HasUuids, HasApiTokens, Notifiable, CanResetPassword;
->>>>>>> f8815316218828b93ef82217d1fc4a0c270a2d73
+
+    use HasApiTokens, HasFactory, Notifiable, HasUuids, CanResetPassword;
 
     protected $table = 'users';
     public $incrementing = false;
     protected $keyType = 'string';
 
+    
+    /**
+     * Attributs assignables en masse
+     */
     protected $fillable = [
         'nom',
         'email',
         'motDePasse',
         'role',
         'telephone',
+
+        'telephone_pro',
+        'descrit_ton_savoir_faire',
         'regionId',
         'isActive',
     ];
-
-<<<<<<< HEAD
-    protected $hidden = ['motDePasse']; // Cache le mot de passe lors de la sérialisation en JSON
  
     // Transformations automatiques des champs
-=======
     protected $hidden = [
         'motDePasse',
         'remember_token',
     ];
 
->>>>>>> f8815316218828b93ef82217d1fc4a0c270a2d73
+
+
+    /**
+     * Casts automatiques
+     */
     protected $casts = [
-        'role' => Role::class,
+        'motDePasse' => 'hashed', // Laravel 10+ hash automatiquement le mot de passe
+        'role' => Role::class,    // si tu utilises un Enum string-backed
         'isActive' => 'boolean',
-        'motDePasse' => 'hashed',
     ];
 
-    // Relations
+
+    /**
+     * Relation avec la région (chaque user appartient à une région)
+     */
     public function region()
     {
         return $this->belongsTo(Region::class, 'regionId');
@@ -69,12 +76,9 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         return $this->hasMany(Commande::class, 'acheteurId');
     }
-<<<<<<< HEAD
  
     // Un utilisateur (acheteur) possède un seul panier
-=======
 
->>>>>>> f8815316218828b93ef82217d1fc4a0c270a2d73
     public function panier()
     {
         return $this->hasOne(Panier::class, 'acheteurId');
@@ -114,13 +118,11 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         return $this->hasMany(Photo::class, 'publieParAdminId');
     }
-<<<<<<< HEAD
+
     public function commentairesPublies()
     {
         return $this->hasMany(Commentaire::class, 'acheteurId');
     }
-}
-=======
 
     //  Méthode pour compatibilité mot de passe Laravel
     public function getAuthPassword()
@@ -128,4 +130,3 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->motDePasse;
     }
 }
->>>>>>> f8815316218828b93ef82217d1fc4a0c270a2d73

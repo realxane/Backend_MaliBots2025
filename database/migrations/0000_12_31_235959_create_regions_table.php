@@ -17,6 +17,7 @@ return new class extends Migration
 
             // Index utile pour les recherches par nom
             $table->index('nom');
+            $table->timestamps();
         });
     }
 
