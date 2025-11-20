@@ -13,6 +13,7 @@ use App\Enums\Role;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasUuids;
+    protected $table = 'users';
 
     /**
      * Laravel n'utilise pas d'auto-incrément ici, car l'ID est un UUID

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Enums\Role;
 use App\Models\User;
@@ -123,6 +123,12 @@ public function storeavecrole(Request $request, $role)
 
     return response()->json(['user' => $user], 201);
         }
+        catch (ValidationException $e) {
+        return response()->json([
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors() //  renvoie le détail des champs
+        ], 422);
+    }
         catch (\Throwable $e) {
         // Retourne une erreur claire si quelque chose échoue
         return response()->json([
@@ -131,6 +137,51 @@ public function storeavecrole(Request $request, $role)
         ], 500);
     }
 }
+public function updateProfile(Request $request)
+{   try{
+    
+    $user = $request->user(); // utilisateur connecté
+
+    // Validation
+    $request->validate([
+        'nom' => 'sometimes|string|max:120',
+        'image' => 'sometimes|file|image|mimes:jpg,jpeg,png|max:10240',
+    ]);
+
+    // Mise à jour du nom
+    if ($request->filled('nom')) {
+        $user->nom = $request->nom;
+    }
+
+    // Upload de l'image si fournie
+    if ($request->hasFile('image')) {
+        // supprimer l'ancienne image si elle existe
+        if ($user->image_path) {
+            Storage::delete($user->image_path);
+        }
+
+        // sauvegarde nouvelle image
+        $path = $request->file('image')->store('public/profile_images');
+        $user->image_path = $path;
+    }
+
+    // Sauvegarde
+    $user->save();
+
+    return response()->json([
+        'message' => 'Profil mis à jour avec succès',
+        'user'    => $user
+    ]);
+    }
+catch (\Throwable $e) {
+    // Retourne une erreur claire si quelque chose échoue
+    return response()->json([
+        'message' => 'Erreur lors de la mise à jour du profil',
+        'error' => $e->getMessage()
+    ], 500);
+}
+}
+
 
  // 4. Mettre à jour un utilisateur
     public function update(Request $request, $id)
