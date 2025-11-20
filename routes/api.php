@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\mdpO\ResetPasswordController;
 
 use Illuminate\Support\Facades\Route;
 
+use App\Enums\Role;
 
 // paiements
 use App\Http\Controllers\PaiementController;
@@ -160,7 +161,8 @@ Route::get('/', function () {
 // Routes publiques
 Route::apiResource('regions', RegionController::class);
 Route::apiResource('users', UserController::class);
-Route::post('/users/create/{role}', [UserController::class, 'storeavecrole']);
+Route::post('/users/create/{role}', [UserController::class, 'storeavecrole'])
+     ->whereIn('role', array_map(fn($c) => $c->value, Role::cases()));
 Route::post('/login', [AuthController::class, 'login']);
 
 // Routes protégées (utilisateur connecté)

@@ -186,7 +186,7 @@ class ProduitController extends Controller
                 ));
             });
     }
-}
+} 
 
 // Helper pour vérifier la présence de colonnes sans casser en prod
 if (!function_exists('schema')) {
