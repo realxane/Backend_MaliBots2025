@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -20,25 +19,39 @@ class FavoriController extends Controller
     // GET /favoris?type=Produit
     public function index(Request $request)
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
 
-        $query = Favori::where('utilisateurId', $userId)
+        $query = Favori::where('utilisateurId', $user->id)
             ->when($request->filled('type'), function ($q) use ($request) {
-                $type = TypeFavori::tryFrom($request->input('type'));
-                if ($type) $q->where('cibleType', $type->value);
+                $typeStr = $request->input('type');
+                $type = TypeFavori::tryFrom($typeStr);
+                if ($type) {
+                    $q->where('cibleType', $type->value);
+                }
             })
             ->orderByDesc('created_at');
 
-        $perPage = min(max((int)$request->input('perPage', 20),1),100);
+        $perPage = (int) $request->input('perPage', 20);
+        $perPage = max(1, min($perPage, 100));
 
-        return FavoriResource::collection($query->paginate($perPage));
+        $paginator = $query->paginate($perPage);
+
+        return FavoriResource::collection($paginator);
     }
 
     // POST /favoris
     public function store(StoreFavoriRequest $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
         $data = $request->validated();
-        $data['utilisateurId'] = $request->user()->id;
+        $data['utilisateurId'] = $user->id;
 
         // éviter les doublons (unique index)
         $favori = Favori::firstOrCreate(
@@ -66,8 +79,13 @@ class FavoriController extends Controller
     // POST /favoris/toggle
     public function toggle(StoreFavoriRequest $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
         $data = $request->validated();
-        $userId = $request->user()->id;
+        $userId = $user->id;
 
         $existing = Favori::where('utilisateurId', $userId)
             ->where('cibleType', $data['cibleType'])

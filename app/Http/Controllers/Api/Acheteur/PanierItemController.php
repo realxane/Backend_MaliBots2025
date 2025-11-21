@@ -21,7 +21,7 @@ class PanierItemController extends Controller
     // POST /acheteur/panier/items
     public function store(StorePanierItemRequest $request)
     {
-        $userId = $request->user()->id;
+        $userId = $request->user()->id; 
         $data = $request->validated();
         $quantite = (int)($data['quantite'] ?? 1);
 

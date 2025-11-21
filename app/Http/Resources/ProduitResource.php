@@ -6,41 +6,78 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProduitResource extends JsonResource
 {
-    public function toArray($request): array
+    /**
+     * Transforme la ressource en tableau pour le JSON.
+     */
+    public function toArray($request)
     {
-        // Liste d’URLs d’images (ordonnées)
-        $images = $this->whenLoaded('images', fn () => $this->images->pluck('url')->all(), function () {
-            // Si non chargé, fallback minimal sans double requête
-            return method_exists($this->resource, 'images')
-                ? $this->images()->orderBy('position')->pluck('url')->all()
-                : [];
+        // Images de la relation
+        $images = $this->whenLoaded('images', function () {
+            return $this->images->map(function ($img) {
+                return [
+                    'id'       => (string) $img->id,
+                    'url'      => $img->url,
+                    'position' => $img->position,
+                ];
+            })->values();
         });
 
-        // Compat: imageUrl (déprécié) = première image si dispo, sinon la colonne
-        $primaryImage = $images[0] ?? $this->imageUrl;
+        // Région
+        $region = $this->whenLoaded('region', function () {
+            return [
+                'id'  => (string) optional($this->region)->id,
+                'nom' => optional($this->region)->nom,
+            ];
+        });
+
+        // Vendeur
+        $vendeur = $this->whenLoaded('vendeur', function () {
+            return [
+                'id'            => (string) $this->vendeur->id,
+                'nom'           => $this->vendeur->nom,
+                'telephone'     => $this->vendeur->telephone,
+                'telephone_pro' => $this->vendeur->telephone_pro,
+            ];
+        });
+
+        // Première image pour l’UI (firstImageUrl)
+        $firstImage = null;
+        if ($this->relationLoaded('images') && $this->images->isNotEmpty()) {
+            $firstImage = $this->images->sortBy('position')->first()->url;
+        } elseif (!empty($this->first_image_url)) {
+            $firstImage = $this->first_image_url;
+        } elseif (!empty($this->firstImageUrl)) {
+            $firstImage = $this->firstImageUrl;
+        } elseif (!empty($this->imageUrl)) {
+            $firstImage = $this->imageUrl;
+        }
 
         return [
-            'id'          => $this->id,
+            'id'          => (string) $this->id,
             'nom'         => $this->nom,
             'description' => $this->description,
-            'prix'        => (float) $this->prix,
-            'categorie'   => $this->categorie?->value ?? (string) $this->categorie,
-            'statut'      => $this->statut?->value ?? (string) $this->statut,
+            'prix'        => $this->prix,
+            'categorie'   => $this->categorie,
 
-            'images'      => $images,
-            'imageUrl'    => $primaryImage, // déprécié, conservé pour compat UI
+            'regionId'    => optional($this->region)->id ?? $this->regionId,
+            'regionName'  => optional($this->region)->nom ?? $this->regionName,
+            'region'      => $region,
 
-            'regionId'    => $this->regionId,
-            'vendeurId'   => $this->vendeurId,
-            'stock'       => (int) $this->stock,
+            'images'       => $images,
+            'firstImageUrl'=> $firstImage,
+            'imageUrl'     => $this->imageUrl, // compat
 
-            'rating'      => [
-                'avg'   => (float) $this->rating_avg,
-                'count' => (int) $this->rating_count,
-            ],
+            'statut'       => $this->statut,
+            'vendeurId'    => (string) $this->vendeurId,
+            'stock'        => $this->stock,
 
-            'createdAt'   => $this->created_at,
-            'updatedAt'   => $this->updated_at,
+            'rating_avg'   => $this->rating_avg,
+            'rating_count' => $this->rating_count,
+
+            'vendeur'      => $vendeur,
+            'sellerName'   => optional($this->vendeur)->nom,
+            'sellerPhone'  => optional($this->vendeur)->telephone_pro
+                              ?? optional($this->vendeur)->telephone,
         ];
     }
 }

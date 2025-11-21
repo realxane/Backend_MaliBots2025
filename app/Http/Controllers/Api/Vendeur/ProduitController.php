@@ -32,7 +32,11 @@ class ProduitController extends Controller
             ->when($request->filled('categorie'), fn($q) => $q->where('categorie', $request->input('categorie')))
             ->when($request->filled('statut'), fn($q) => $q->where('statut', $request->input('statut')))
             ->when($request->boolean('withTrashed'), fn($q) => $q->withTrashed())
-            ->with('images') // eager load des images
+            ->with([
+                'images:id,produitId,url,position',
+                'region:id,nom',
+                'vendeur:id,nom,telephone,telephone_pro',
+            ])
             ->orderByDesc('created_at');
 
         $perPage = min(max((int) $request->input('perPage', 15), 1), 100);
@@ -78,7 +82,11 @@ class ProduitController extends Controller
                 }
             }
 
-            return $produit->load('images');
+            return $produit->load([
+                'images:id,produitId,url,position',
+                'region:id,nom',
+                'vendeur:id,nom,telephone,telephone_pro',
+            ]);
         });
 
         return (new ProduitResource($produit))
@@ -91,7 +99,13 @@ class ProduitController extends Controller
     {
         $this->authorize('view', $produit);
 
-        return new ProduitResource($produit->load('images'));
+        return new ProduitResource(
+            $produit->load([
+                'images:id,produitId,url,position',
+                'region:id,nom',
+                'vendeur:id,nom,telephone,telephone_pro',
+            ])
+        );
     }
 
     // PUT/PATCH /vendeur/produits/{produit}
@@ -116,7 +130,6 @@ class ProduitController extends Controller
 
             // Si un tableau d’images est fourni, on remplace l’ensemble
             if (is_array($images)) {
-                // delete puis recreate (simple et fiable)
                 $produit->images()->delete();
                 foreach (array_values($images) as $idx => $url) {
                     $produit->images()->create([
@@ -132,7 +145,11 @@ class ProduitController extends Controller
                 }
             }
 
-            return $produit->load('images');
+            return $produit->load([
+                'images:id,produitId,url,position',
+                'region:id,nom',
+                'vendeur:id,nom,telephone,telephone_pro',
+            ]);
         });
 
         if ($ancienStatut !== StatutProduit::Valide && $produit->statut === StatutProduit::Valide) {
@@ -166,7 +183,13 @@ class ProduitController extends Controller
 
         $produit->restore();
 
-        return new ProduitResource($produit->load('images'));
+        return new ProduitResource(
+            $produit->load([
+                'images:id,produitId,url,position',
+                'region:id,nom',
+                'vendeur:id,nom,telephone,telephone_pro',
+            ])
+        );
     }
 
     private function sendNouveauProduitPublie(Produit $produit): void
@@ -186,7 +209,7 @@ class ProduitController extends Controller
                 ));
             });
     }
-} 
+}
 
 // Helper pour vérifier la présence de colonnes sans casser en prod
 if (!function_exists('schema')) {

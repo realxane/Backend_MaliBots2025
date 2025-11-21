@@ -19,7 +19,7 @@ class PanierController extends Controller
 
         $panier = Panier::firstOrCreate(['acheteurId' => $userId]);
 
-        $this->authorize('view', $panier);
+        $this->authorize('view', $panier); 
 
         $panier->load(['items.produit']);
 

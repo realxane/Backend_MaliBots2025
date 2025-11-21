@@ -95,7 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['store', 'update', 'destroy']);
 
     // Acheteur
-    Route::prefix('acheteur')->as('acheteur.')->middleware('checkrole:acheteur')->group(function () {
+    Route::prefix('acheteur')->as('acheteur.')->middleware('checkrole:acheteur,vendeur')->group(function () {
         Route::get('panier', [PanierController::class, 'show'])->name('panier.show');
         Route::delete('panier', [PanierController::class, 'clear'])->name('panier.clear');
 
