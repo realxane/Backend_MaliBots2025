@@ -24,7 +24,7 @@ class Commande extends Model
         'methodePaiement' => MethodePaiement::class,
         'statut' => StatutCommande::class,
     ];
-
+ 
     //Une commande concerne un acheteur
     public function acheteur()
     {
@@ -40,6 +40,6 @@ class Commande extends Model
     //Une commande a un seul paiement
     public function paiements() 
     {
-        return $this->hasOne(Paiement::class, 'commandeId');
+        return $this->hasOne(Paiement::class, 'commandeId'); 
     }
 }

@@ -16,9 +16,13 @@ class Signalement extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'utilisateurId', 'cibleType', 'cibleId', 'statut',
-        'traiteParAdminId', 'dateTraitement', 
-    ]; 
+        'utilisateurId',
+        'cibleType',
+        'cibleId',
+        'statut',
+        'traiteParAdminId',
+        'dateTraitement',
+    ];
 
     protected $casts = [
         'cibleType' => TypeSignalement::class,
@@ -26,13 +30,17 @@ class Signalement extends Model
         'dateTraitement' => 'datetime',
     ];
 
-    //Un signalement concerne un utilisateur
+    // Valeur par défaut du statut
+    protected $attributes = [
+        'statut' => StatutSignalement::Ouvert,
+    ];
+
+    // Relations
     public function utilisateur()
     {
         return $this->belongsTo(User::class, 'utilisateurId');
     }
 
-    //Un signalement est traité par un admin
     public function traiteParAdmin()
     {
         return $this->belongsTo(User::class, 'traiteParAdminId');

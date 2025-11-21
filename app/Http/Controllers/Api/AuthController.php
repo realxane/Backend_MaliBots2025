@@ -33,11 +33,12 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         // Déterminer la page d'accueil selon le rôle
-        $homePage = match ($user->role->value) {
-            Role::Admin->value => 'admin_dashboard',
-            Role::Vendeur->value, Role::Acheteur->value => 'home_user',
-            default => 'home_user',
-        };
+       $homePage = match ($user->role->value) {
+    Role::Admin->value => 'admin_dashboard',
+    Role::Vendeur->value => 'uservendeur',
+    Role::Acheteur->value => 'useracheteur',
+        default => 'useracheteur',
+};
 
         return response()->json([
             'message' => 'Connexion réussie',
@@ -69,7 +70,8 @@ class AuthController extends Controller
      * Récupérer les informations de l'utilisateur connecté
      */
     public function me(Request $request)
-    {
-        return response()->json($request->user());
+    
+    {$user = User::with('region')->find($request->user()->id);
+    return response()->json($user);
     }
 }

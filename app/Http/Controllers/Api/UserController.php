@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Enums\Role;
 use App\Models\User;
 use App\Models\Region;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -42,7 +44,7 @@ class UserController extends Controller
 {
     try {
         // Récupération du rôle et conversion en enum
-        $roleInput = ucfirst(strtolower($request->input('role')));
+        $roleInput = Role::tryFrom(strtolower($request->input('role', '')));
         $role = Role::tryFrom($roleInput);
         if (!$role) {
             return response()->json([
@@ -94,47 +96,50 @@ class UserController extends Controller
         ], 500);
     }
 }
-public function storeavecrole(Request $request, $role)
+public function storeavecrole(Request $request, Role $role)
 {
     try {
-        
-    $role = ucfirst(strtolower($role)); // transforme "vendeur" → "Vendeur"
+        $rules = [
+            'nom'   => 'required|string|max:120',
+            'email' => 'required|email|unique:users,email',
+            'motDePasse' => 'required|string|min:6',
+            'region' => 'required|string|max:150',
+            'telephone' => 'nullable|string|max:30',
+            'telephone_pro' => 'nullable|string|max:30',
+            'descrit_ton_savoir_faire' => 'nullable|string|max:255',
+        ];
 
-    $validated = $request->validate([
-        'nom' => 'required|string|max:120',
-        'email' => 'required|email|unique:users,email',
-        'motDePasse' => 'required|string|min:6',
-        'region' => 'required|string|max:150',
-        'telephone' => 'nullable|string|max:30',
-    ]);
-
-    $region = Region::firstOrCreate(['nom' => $validated['region']]);
-
-    $user = User::create([
-        'nom' => $validated['nom'],
-        'email' => $validated['email'],
-        'motDePasse' => $validated['motDePasse'],
-        'role' => $role, 
-        'regionId' => $region->id,
-        'telephone' => $validated['telephone'] ?? null,
-        'telephone_pro' => $request->telephone_pro,
-        'descrit_ton_savoir_faire' => $request->descrit_ton_savoir_faire,
-    ]);
-
-    return response()->json(['user' => $user], 201);
+        if (in_array($role, [Role::Vendeur, Role::Admin], true)) {
+            $rules['telephone_pro'] = 'nullable|string|max:30';
+            $rules['descrit_ton_savoir_faire'] = 'nullable|string|max:255';
         }
-        catch (ValidationException $e) {
+
+
+        $validated = $request->validate($rules);
+
+        $region = Region::firstOrCreate(['nom' => $validated['region']]);
+
+        $user = User::create([
+            'nom' => $validated['nom'],
+            'email' => $validated['email'],
+            'motDePasse' => $validated['motDePasse'], // cast 'hashed' dans le modèle
+            'role' => $role,                           // pas de conversion
+            'regionId' => $region->id,
+            'telephone' => $validated['telephone'] ?? null,
+            'telephone_pro' => $validated['telephone_pro'] ?? null,
+            'descrit_ton_savoir_faire' => $validated['descrit_ton_savoir_faire'] ?? null,
+            'isActive' => true,
+        ]);
+
         return response()->json([
-            'message' => 'Erreur de validation',
-            'errors' => $e->errors() //  renvoie le détail des champs
-        ], 422);
-    }
-        catch (\Throwable $e) {
-        // Retourne une erreur claire si quelque chose échoue
-        return response()->json([
-            'message' => 'Erreur lors de la création de l’utilisateur',
-            'error' => $e->getMessage()
-        ], 500);
+            'message' => 'Utilisateur créé avec succès !',
+            'user' => $user->load('region'),
+        ], 201);
+
+    } catch (ValidationException $e) {
+        return response()->json(['message' => 'Erreur de validation', 'errors' => $e->errors()], 422);
+    } catch (\Throwable $e) {
+        return response()->json(['message' => 'Erreur lors de la création de l’utilisateur', 'error' => $e->getMessage()], 500);
     }
 }
 public function updateProfile(Request $request)
@@ -181,6 +186,7 @@ catch (\Throwable $e) {
     ], 500);
 }
 }
+
 
 
  // 4. Mettre à jour un utilisateur

@@ -19,7 +19,7 @@ class Favori extends Model
     ];
 
     protected $casts = [
-        'cibleType' => TypeFavori::class,
+        'cibleType' => TypeFavori::class, 
     ];
 
     //Un favori concerne un utilisateur

@@ -98,4 +98,32 @@ class AdminController extends Controller
             'user' => $user
         ], 200);
     }
+    public function getUsersByRole($role)
+{
+    try {
+        // Vérification si le rôle existe
+        $validRoles = ['Admin', 'Vendeur', 'Acheteur'];
+
+        if (!in_array($role, $validRoles)) {
+            return response()->json([
+                'message' => 'Rôle invalide',
+                'roles_acceptes' => $validRoles
+            ], 400);
+        }
+
+        // Recherche des utilisateurs du rôle demandé
+        $users = User::where('role', $role)->get();
+
+        return response()->json([
+            'role' => $role,
+            'total' => $users->count(),
+            'users' => $users
+        ], 200);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'Erreur lors de la récupération',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }

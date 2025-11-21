@@ -12,13 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+
         $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class); 
-         $middleware->alias([
-        'role' => App\Http\Middleware\RoleMiddleware::class,
-    ]);
+        $middleware->alias([
+            'checkrole' => \App\Http\Middleware\CheckRole::class,
+        ]);
         //
         
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        
     })->create();
