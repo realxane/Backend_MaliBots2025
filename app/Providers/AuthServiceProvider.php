@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Produit;
 use App\Models\Panier;
+use App\Models\Favori;
 use App\Policies\ProduitPolicy;
 use App\Policies\PanierPolicy;
+use App\Policies\FavoriPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider

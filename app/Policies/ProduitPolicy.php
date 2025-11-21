@@ -16,9 +16,15 @@ class ProduitPolicy
         return $produit->vendeurId === $user->id;
     }
 
+    protected function isVendeur(User $user): bool
+    {
+        $role = $user->role instanceof \BackedEnum ? $user->role->value : (string) $user->role;
+        return mb_strtolower($role) === 'vendeur';
+    }
+
     public function viewAny(User $user): bool
     {
-        return $user->role === Role::Vendeur;
+        return $this->isVendeur($user);
     }
 
     public function view(User $user, Produit $produit): bool
@@ -27,14 +33,14 @@ class ProduitPolicy
     }
 
     public function create(User $user): bool
-    {   
+    {
         \Log::debug('ProduitPolicy@create', [
             'user_id' => $user->id,
             'role_raw' => $user->role,
             'role_type' => gettype($user->role),
             'is_enum' => $user->role instanceof \BackedEnum,
         ]);
-        return $user->role === Role::Vendeur;
+        return $this->isVendeur($user);
     }
 
     public function update(User $user, Produit $produit): bool
