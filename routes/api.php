@@ -41,6 +41,9 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 
+
+use App\Http\Controllers\Api\Catalogue\CatalogueController;
+
 Route::get('/paiements', [PaiementController::class, 'index']);
 Route::get('/paiements/{id}', [PaiementController::class, 'show']);
 Route::post('/paiements', [PaiementController::class, 'store']);
@@ -179,3 +182,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/admin/users', [AdminController::class, 'getAllUsers']);
         Route::patch('/admin/user/toggle/{id}', [AdminController::class, 'toggleUserStatus']);
         Route::patch('/admin/user/role/{id}', [AdminController::class, 'updateRole']);
+
+
+Route::prefix('produits')->group(function () {
+    Route::get('/', [CatalogueController::class, 'index']); // GET /api/produits
+    Route::get('/{id}', [CatalogueController::class, 'show']); // GET /api/produits/{id}
+});
